@@ -1,308 +1,219 @@
 import streamlit as st
-import streamlit.components.v1 as components
+from datetime import date, datetime
 
 # ==========================================
-# 1. 系統設定 (手機版優化)
+# 1. 系統設定
 # ==========================================
 st.set_page_config(
-    page_title="三一協會便民APP",
-    page_icon="📱",
+    page_title="2026 新制度權益通 | 三一協會",
+    page_icon="⚖️",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
 # ==========================================
-# 2. LINE 瀏覽器脫逃模組 (新增功能) 🚀
-# ==========================================
-# 這段 JavaScript 會自動偵測是否為 LINE 瀏覽器
-# 如果是，它會在頂部顯示一個「切換瀏覽器」的按鈕，這是解決 LINE 連結問題的唯一解法
-def line_browser_fix():
-    js_code = """
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            // 偵測 LINE 內建瀏覽器
-            if (userAgent.indexOf("Line") > -1) {
-                // 檢查網址是否已經包含脫逃參數
-                if (window.location.href.indexOf("openExternalBrowser=1") === -1) {
-                    
-                    // 建立一個置頂的提示條
-                    var banner = document.createElement("div");
-                    banner.style.position = "fixed";
-                    banner.style.top = "0";
-                    banner.style.left = "0";
-                    banner.style.width = "100%";
-                    banner.style.zIndex = "999999";
-                    banner.style.backgroundColor = "#ff4b4b"; // 醒目的紅色
-                    banner.style.color = "white";
-                    banner.style.textAlign = "center";
-                    banner.style.padding = "15px";
-                    banner.style.fontSize = "16px";
-                    banner.style.fontWeight = "bold";
-                    banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-                    banner.style.cursor = "pointer";
-                    banner.innerHTML = "⚠️ 檢測到 LINE 瀏覽器，連結可能失效<br>👉 點此切換至【完整瀏覽器】開啟 👈";
-                    
-                    // 點擊後強制用系統瀏覽器打開
-                    banner.onclick = function() {
-                        var separator = window.location.href.indexOf('?') > -1 ? '&' : '?';
-                        var newUrl = window.location.href + separator + 'openExternalBrowser=1';
-                        window.location.href = newUrl;
-                    };
-                    
-                    document.body.prepend(banner);
-                }
-            }
-        });
-    </script>
-    """
-    components.html(js_code, height=0)
-
-line_browser_fix()
-
-# ==========================================
-# 3. CSS 美學 (手機觸控 + 勾選優化)
+# 2. CSS 美學 (三一協會風格：穩重、清晰、強調重點)
 # ==========================================
 st.markdown("""
     <style>
-    /* 全站基礎 */
     .stApp {
-        background-color: #f2f2f7; /* iOS 淺灰背景 */
-        font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif;
+        background-color: #F0F4F8; /* 淡灰藍底色，專業感 */
+        font-family: "Microsoft JhengHei", sans-serif;
     }
     
-    /* 隱藏官方元件 */
-    header {visibility: hidden;}
-    footer {display: none !important;}
-    
-    /* 手機版頂部 Header (固定式質感) */
-    .mobile-header {
-        background: linear-gradient(180deg, #007AFF 0%, #0063CC 100%);
-        padding: 25px 20px 20px 20px;
+    /* 標題區塊 */
+    .header-box {
+        background: linear-gradient(135deg, #2C3E50 0%, #4CA1AF 100%);
+        padding: 30px 20px;
+        border-radius: 0 0 30px 30px;
         color: white;
         text-align: center;
-        border-radius: 0 0 25px 25px;
-        margin-top: -60px; /* 預留空間給 LINE 提示條 */
-        margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        margin-top: -60px;
     }
-    .app-title { font-size: 26px; font-weight: 900; letter-spacing: 1px; }
-    .app-subtitle { font-size: 14px; opacity: 0.95; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; display: inline-block; margin-top: 5px;}
+    .header-title { font-size: 28px; font-weight: bold; letter-spacing: 1px; }
+    .header-subtitle { font-size: 16px; margin-top: 10px; opacity: 0.9; }
     
-    /* 資訊卡片容器 */
-    .mobile-card-container {
-        background: white;
+    /* 緊急通知卡片 */
+    .urgent-card {
+        background-color: #FFF5F5;
+        border-left: 5px solid #E53E3E;
         padding: 20px;
-        border-radius: 18px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        border: 1px solid #eee;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
+    .urgent-title { color: #C53030; font-weight: bold; font-size: 18px; display: flex; align-items: center; }
     
-    /* 卡片內容樣式 */
-    .card-title {
-        font-size: 19px;
-        font-weight: bold;
-        color: #1c1c1e;
-        margin-bottom: 8px;
-        line-height: 1.4;
-    }
-    
-    /* 辦理方式區塊 */
-    .method-box {
-        background-color: #f2f2f7;
-        padding: 12px;
+    /* 一般資訊卡片 */
+    .info-card {
+        background: white;
+        padding: 15px;
         border-radius: 12px;
-        font-size: 14px;
-        color: #3a3a3c;
-        margin-bottom: 15px;
-        margin-top: 10px;
-        border-left: 4px solid #007AFF;
+        margin-bottom: 12px;
+        border: 1px solid #E2E8F0;
+        transition: transform 0.2s;
     }
-    
-    /* 分類標籤 */
-    .tag {
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card-tag {
         font-size: 12px;
-        font-weight: bold;
-        padding: 4px 10px;
-        border-radius: 6px;
+        padding: 2px 8px;
+        border-radius: 10px;
         color: white;
+        margin-right: 8px;
         display: inline-block;
         margin-bottom: 5px;
     }
     
-    /* 選單優化 */
-    .stRadio > div {
-        display: flex;
-        flex-direction: row;
-        overflow-x: auto;
-        gap: 8px;
-        padding-bottom: 5px;
-    }
-    .stRadio label {
-        background-color: white !important;
-        border: 1px solid #ddd;
-        padding: 8px 12px !important;
-        border-radius: 20px !important;
-        font-size: 14px;
-        white-space: nowrap;
-    }
-
-    /* 按鈕優化 */
-    .stButton button {
-        width: 100%;
-        border-radius: 12px;
-        height: 42px;
-        font-weight: 600;
-    }
+    /* 標籤顏色定義 */
+    .tag-labor { background-color: #3182CE; } /* 藍：勞工 */
+    .tag-money { background-color: #38A169; } /* 綠：福利/錢 */
+    .tag-health { background-color: #D69E2E; } /* 黃：健康 */
+    .tag-life { background-color: #805AD5; } /* 紫：生活 */
     
-    /* 備忘錄區塊 */
-    .memo-box {
-        background: #fffbea;
-        border: 2px dashed #ffd700;
-        padding: 20px;
-        border-radius: 15px;
-        margin-top: 20px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 完整資料庫 (18項新制 + 連結)
+# 3. 資料庫建立
 # ==========================================
-data = [
-    # 💰 荷包/稅務
-    {"id": 1, "cat": "💰 荷包/稅務", "title": "綜所稅生活費調高即降稅", "icon": "📉", "color": "#34C759",
-     "method": "5月報稅自動適用，免申請。符合扶養條件系統會自動扣除。", "link": "https://tax.nat.gov.tw/", "btn": "前往報稅網"},
-    {"id": 2, "cat": "💰 荷包/稅務", "title": "國民年金保費調漲84元", "icon": "💸", "color": "#34C759",
-     "method": "依收到的繳款單繳納，建議設定銀行帳戶自動扣繳。", "link": "https://www.bli.gov.tw/0013605.html", "btn": "國保專區"},
-    {"id": 3, "cat": "💰 荷包/稅務", "title": "租金補貼排除頂加違建", "icon": "🏠", "color": "#34C759",
-     "method": "線上申請，需準備租約與存摺。注意房屋稅籍需符合規定。", "link": "https://pip.moi.gov.tw/V3/B/SCRB0102.aspx", "btn": "線上申請"},
-    {"id": 4, "cat": "💰 荷包/稅務", "title": "國旅住宿補貼800元/晚", "icon": "🧳", "color": "#34C759",
-     "method": "入住前至「台灣旅宿網」上傳身分證，入住時折抵。", "link": "https://taiwanstay.net.tw/", "btn": "登錄證件"},
-
-    # 💼 職場/勞保
-    {"id": 5, "cat": "💼 職場/勞保", "title": "最低工資調漲至2.95萬", "icon": "💵", "color": "#007AFF",
-     "method": "無需申請。若薪資低於標準，可向勞工局申訴。", "link": "https://www.mol.gov.tw/", "btn": "勞動部官網"},
-    {"id": 6, "cat": "💼 職場/勞保", "title": "勞保年金60歲領年減4%", "icon": "📉", "color": "#007AFF",
-     "method": "向勞保局申請。建議先試算最划算的請領年齡。", "link": "https://edesk.bli.gov.tw/na/", "btn": "年金試算"},
-    {"id": 7, "cat": "💼 職場/勞保", "title": "農保生育給付增至10萬", "icon": "👶", "color": "#007AFF",
-     "method": "備妥出生證明，向投保農會提出申請。", "link": "https://www.bli.gov.tw/0013605.html", "btn": "申請書下載"},
-    {"id": 8, "cat": "💼 職場/勞保", "title": "勞工請假按比例扣全勤", "icon": "📝", "color": "#007AFF",
-     "method": "依公司規定。若雇主違法扣薪，可申請調解。", "link": "https://labor-elearning.mol.gov.tw/", "btn": "權益查詢"},
-    {"id": 9, "cat": "💼 職場/勞保", "title": "育嬰假以日計領8成薪", "icon": "🍼", "color": "#007AFF",
-     "method": "向雇主請假後，向勞保局申請「育嬰留職停薪津貼」。", "link": "https://www.bli.gov.tw/0017280.html", "btn": "線上申辦"},
-
-    # 🏥 醫療/長照
-    {"id": 10, "cat": "🏥 醫療/長照", "title": "長照3.0啟動第2、3階段", "icon": "👵", "color": "#FF3B30",
-     "method": "手機直接撥打「1966」長照專線，專人到府評估。", "link": "https://1966.gov.tw/", "btn": "1966 專區"},
-    {"id": 11, "cat": "🏥 醫療/長照", "title": "長照特別扣除額大調升", "icon": "🧾", "color": "#FF3B30",
-     "method": "5月報稅申報。需檢附身心障礙證明或失能核定函。", "link": "https://www.etax.nat.gov.tw/", "btn": "扣除額說明"},
-    {"id": 12, "cat": "🏥 醫療/長照", "title": "免費胃癌篩檢限一生1次", "icon": "🩺", "color": "#FF3B30",
-     "method": "45-74歲民眾，持健保卡至特約院所即可。", "link": "https://www.hpa.gov.tw/", "btn": "查詢院所"},
-
-    # 🚗 生活/交通
-    {"id": 13, "cat": "🚗 生活/交通", "title": "老人換駕照降到70歲", "icon": "🪪", "color": "#FF9500",
-     "method": "收到通知後，至監理站體檢與認知測驗，合格換發。", "link": "https://www.mvdis.gov.tw/", "btn": "監理服務網"},
-    {"id": 14, "cat": "🚗 生活/交通", "title": "無照駕駛累犯罰6萬", "icon": "👮", "color": "#FF9500",
-     "method": "違規查詢與繳款，可上監理服務網。", "link": "https://www.mvdis.gov.tw/m3-emv-vil/vil/penaltyQuery", "btn": "罰單查詢"},
-    {"id": 15, "cat": "🚗 生活/交通", "title": "教召改14天退8年召2次", "icon": "🪖", "color": "#FF9500",
-     "method": "上「後備軍人網路服務臺」查詢年度教召資訊。", "link": "https://afrc.mnd.gov.tw/EFR/FAQ.aspx", "btn": "教召查詢"},
-    {"id": 16, "cat": "🚗 生活/交通", "title": "北捷7月解鎖iPhone進站", "icon": "📱", "color": "#FF9500",
-     "method": "屆時將iPhone綁定快速交通卡即可感應。", "link": "https://www.metro.taipei/", "btn": "北捷官網"},
-    {"id": 17, "cat": "🚗 生活/交通", "title": "家貓植晶片違者罰款", "icon": "🐱", "color": "#FF9500",
-     "method": "帶貓咪至動物醫院施打晶片並辦理寵物登記。", "link": "https://www.pet.gov.tw/", "btn": "寵物登記網"},
-    {"id": 18, "cat": "🚗 生活/交通", "title": "原民身分登記限期1/5前", "icon": "📝", "color": "#FF9500",
-     "method": "攜帶身分證、戶口名簿至任一戶政事務所辦理。", "link": "https://www.ris.gov.tw/", "btn": "戶政司官網"},
+regulations = [
+    # 勞工與就業
+    {"cat": "勞工", "title": "最低工資調漲", "desc": "月薪升至 29,500 元，時薪 196 元。", "detail": "2026/1/1 生效，勞健保級距將同步調整。"},
+    {"cat": "勞工", "title": "勞保年金 60 歲領減 20%", "desc": "法定請領年齡調高至 65 歲。", "detail": "若 60 歲提前領，每提前 1 年扣 4%，5 年共扣 20%。"},
+    {"cat": "勞工", "title": "扣全勤須按比例", "desc": "請假不能直接扣光全勤獎金。", "detail": "針對家庭照顧假或事假，雇主不得因請假 1 小時就扣除全月獎金。"},
+    {"cat": "勞工", "title": "育嬰假以日計", "desc": "彈性請假，領 8 成薪。", "detail": "不再強制一次請長假，可按日申請，方便雙薪家庭調度。"},
+    {"cat": "勞工", "title": "教召改 14 天", "desc": "參加 1 次抵 2 次。", "detail": "針對退伍 8 年內夥伴，雖然天數變長，但能加速消耗召集額度。"},
+    
+    # 福利與補助
+    {"cat": "福利", "title": "綜所稅大減稅", "desc": "生活費調高至 21.3 萬。", "detail": "免稅額與標準扣除額同步調升，多口之家 2026 報稅時超有感。"},
+    {"cat": "福利", "title": "農保生育給付 10 萬", "desc": "雙胞胎可領 20 萬。", "detail": "減輕農友家庭負擔，補助金額翻倍。"},
+    {"cat": "福利", "title": "長照扣除額 18 萬", "desc": "家有需照顧者必看。", "detail": "綜所稅特別扣除額調升，減輕長照家庭稅負。"},
+    {"cat": "福利", "title": "租屋補貼排違建", "desc": "頂樓加蓋不再補助。", "detail": "新制排除頂加等違建，租屋族請務必確認房東的建物合法性。"},
+    {"cat": "福利", "title": "國旅住宿補貼", "desc": "平日入住最高領 2000。", "detail": "預計 4 月啟動。第一晚 800 元，續住加碼 1200 元 (限週日-週四)。"},
+    
+    # 醫療與健康
+    {"cat": "健康", "title": "長照 3.0 啟動", "desc": "納入年輕型失智症。", "detail": "新增智慧輔具租賃補助（如防跌倒偵測）。"},
+    {"cat": "健康", "title": "免費胃癌篩檢", "desc": "45-74 歲一生一次。", "detail": "公費胃幽門螺旋桿菌篩檢（糞便檢查），預防勝於治療。"},
+    {"cat": "健康", "title": "國民年金漲價", "desc": "每月自付額增 84 元。", "detail": "隨著物價指數調整費率。"},
+    
+    # 生活法規
+    {"cat": "生活", "title": "高齡換照降至 70 歲", "desc": "需通過體檢與認知測驗。", "detail": "2026 年 5 月起實施，換發駕照效期為 3 年。"},
+    {"cat": "生活", "title": "無照駕駛重罰", "desc": "累犯罰 6 萬 + 扣車。", "detail": "罰則大幅加重，並得沒入車輛，切勿以身試法。"},
+    {"cat": "生活", "title": "北捷 iPhone 進站", "desc": "預計 7 月解鎖功能。", "detail": "閘門系統更新，支援 Apple Pay 快速通關。"},
+    {"cat": "生活", "title": "家貓強制植晶片", "desc": "違者罰 1.5 萬。", "detail": "2026/1/1 開罰，請盡速帶貓咪至獸醫院完成寵物登記。"},
+    {"cat": "生活", "title": "原民身分登記 (緊急)", "desc": "1/5 期限將至！", "detail": "需回復傳統名字或並列羅馬拼音。若錯過，請把握最後 30 天補救期。"}
 ]
 
 # ==========================================
-# 5. 手機版頭部
+# 4. 頁面內容
 # ==========================================
+
+# Header
 st.markdown("""
-    <div class="mobile-header">
-        <div class="app-title">三一協會</div>
-        <div class="app-subtitle">2026 便民新制通 📢</div>
+    <div class="header-box">
+        <div class="header-title">⚖️ 2026 新制度權益通</div>
+        <div class="header-subtitle">三一教育文化協會 關心您的權益</div>
     </div>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 6. 導航與狀態管理
-# ==========================================
-if "checklist" not in st.session_state:
-    st.session_state.checklist = []
+# 緊急通知區 (動態判斷日期)
+today = date.today()
+deadline = date(2026, 1, 5)
+days_left = (deadline - today).days
 
-category = st.radio(
-    "分類導航",
-    ["全部", "💰 荷包/稅務", "💼 職場/勞保", "🏥 醫療/長照", "🚗 生活/交通"],
-    horizontal=True,
-    label_visibility="collapsed"
-)
+if days_left < 30: # 假設在期限前後
+    st.markdown(f"""
+    <div class="urgent-card">
+        <div class="urgent-title">🔥 緊急提醒：原住民身分登記</div>
+        <p style="margin-top: 10px;">
+            <b>還有機會補救！</b> 依據新法，若您尚未完成「回復傳統名字」或「並列羅馬拼音」，
+            請務必在 <b>2026/1/5</b> 前（或隨後的 30 天補救期內）前往戶政事務所辦理，以免喪失身分。
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-# 篩選資料
-if category == "全部":
-    display_items = data
-else:
-    display_items = [item for item in data if item["cat"] == category]
+# Main Tabs
+tab1, tab2, tab3 = st.tabs(["📜 18項制度懶人包", "✅ 您的行動清單", "🔍 協會補充觀點"])
 
-st.write("") 
-
-# ==========================================
-# 7. 動態牆 (含勾選功能)
-# ==========================================
-for item in display_items:
-    with st.container():
-        # 版面配置：左邊主要內容 (0.85)，右邊勾選框 (0.15)
-        col_content, col_check = st.columns([0.85, 0.15])
+# --- Tab 1: 制度介紹 ---
+with tab1:
+    st.markdown("### 2026 關鍵新制一覽")
+    
+    # 篩選器
+    filter_cat = st.multiselect("篩選類別", ["勞工", "福利", "健康", "生活"], default=["勞工", "福利", "健康", "生活"])
+    
+    cols = st.columns(2)
+    
+    filtered_data = [r for r in regulations if r['cat'] in filter_cat]
+    
+    for i, item in enumerate(filtered_data):
+        # 決定顏色標籤
+        color_class = {
+            "勞工": "tag-labor",
+            "福利": "tag-money",
+            "健康": "tag-health",
+            "生活": "tag-life"
+        }.get(item['cat'], "tag-life")
         
-        with col_content:
+        with cols[i % 2]:
             st.markdown(f"""
-            <div class="mobile-card-container">
-                <span class="tag" style="background-color: {item['color']};">{item['cat'].split(" ")[1]}</span>
-                <div class="card-title">{item['icon']} {item['title']}</div>
-                <div class="method-box">
-                    <b>💡 辦理方式：</b><br>{item['method']}
+            <div class="info-card">
+                <div><span class="card-tag {color_class}">{item['cat']}</span></div>
+                <div style="font-weight:bold; font-size:16px; margin-top:5px;">{item['title']}</div>
+                <div style="color:#555; font-size:14px; margin: 5px 0;">{item['desc']}</div>
+                <div style="color:#718096; font-size:12px; border-top:1px solid #eee; padding-top:5px;">
+                    💡 {item['detail']}
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            # 按鈕獨立放置
-            st.link_button(f"🔗 {item['btn']}", item['link'], use_container_width=True)
-            
-        with col_check:
-            st.write("")
-            st.write("")
-            
-            is_checked = item['title'] in st.session_state.checklist
-            
-            if st.checkbox("", key=f"chk_{item['id']}", value=is_checked):
-                if item['title'] not in st.session_state.checklist:
-                    st.session_state.checklist.append(item['title'])
-            else:
-                if item['title'] in st.session_state.checklist:
-                    st.session_state.checklist.remove(item['title'])
-        
-        st.write("---") 
 
-# ==========================================
-# 8. 我的備忘錄 (自動生成)
-# ==========================================
-if st.session_state.checklist:
-    st.markdown("""<div class="memo-box">""", unsafe_allow_html=True)
-    st.subheader("📝 我的待辦清單")
-    st.caption("這是您勾選的項目，請截圖保存！")
+# --- Tab 2: 辦理方式 ---
+with tab2:
+    st.markdown("### 📝 請立即檢查以下項目")
+    st.caption("三一協會幫您整理了需要「採取行動」的項目，請逐一打勾確認。")
     
-    for i, title in enumerate(st.session_state.checklist):
-        st.markdown(f"**{i+1}. {title}**")
-        
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("#### 🔴 最緊急")
+    c1 = st.checkbox("【原民身分】檢查戶口名簿，確認是否已回復傳統名或並列羅馬拼音？(期限緊迫)")
+    
+    st.markdown("#### 🟠 建議盡快")
+    c2 = st.checkbox("【貓奴注意】檢查家貓是否已植入晶片並完成寵物登記？(違者罰1.5萬)")
+    c3 = st.checkbox("【高齡駕駛】家中是否有滿 70 歲長輩？提醒留意換照通知單。")
+    
+    st.markdown("#### 🔵 年度規劃")
+    c4 = st.checkbox("【健康檢查】滿 45 歲了嗎？預約免費胃幽門螺旋桿菌篩檢。")
+    c5 = st.checkbox("【旅遊規劃】4月起平日國旅有補助，記得先上網登錄資料。")
+    
+    st.info("💡 只要完成上述打勾項目，您就避開了 90% 的新制風險！")
 
-# ==========================================
-# 9. 底部版權
-# ==========================================
-st.markdown("""
-    <div style="text-align: center; margin-top: 30px; padding-bottom: 20px; color: #8e8e93; font-size: 12px;">
-    三一協會 © 2026<br>
-    Designed for Mobile
-    </div>
-""", unsafe_allow_html=True)
+# --- Tab 3: 協會補充 ---
+with tab3:
+    st.markdown("### 🔍 還有什麼被漏掉了？")
+    st.markdown("圖表中未列出，但**三一協會**認為對大家影響很大的趨勢：")
+    
+    st.markdown("""
+    #### 1. 🌍 碳費正式開徵 (物價波動預警)
+    * **內容**：2026 年起針對排碳大戶徵收碳費。
+    * **影響**：雖然不直接對民眾收錢，但水泥、鋼鐵、電力成本可能轉嫁，需留意物價波動。
+    
+    #### 2. 🚗 電動車免稅延長
+    * **內容**：電動車免徵使用牌照稅優惠，確認延長至 2030 年。
+    * **建議**：若今年有購車需求，電動車仍是稅務上的首選。
+    
+    #### 3. 💼 勞保級距隨之調整
+    * **內容**：配合基本工資漲至 29,500 元，勞保投保薪資「第 1 級」也將同步調升。
+    * **影響**：雇主與勞工每個月需繳的保費會稍微變多一點點，但未來的保障也隨之提高。
+    """)
+    
+    st.divider()
+    st.markdown("#### 📺 推薦觀看影片")
+    st.video("https://www.youtube.com/watch?v=9SkfgNnI3_E")
+    st.caption("影片：登記原民身分展延 1/5 起 30 日內還可申請補辦 (來源：原視新聞)")
+
+# Footer
+st.markdown("---")
+st.markdown("<div style='text-align:center; color:#888;'>© 2026 三一教育文化協會 | 資料來源：政府公告與 AI 彙整</div>", unsafe_allow_html=True)
