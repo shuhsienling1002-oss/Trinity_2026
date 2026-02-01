@@ -199,8 +199,8 @@ regulations = [
 # 標題
 st.markdown("""
     <div class="header-box">
-        <div class="header-title">三一協會</div>
-        <div style="margin-top:5px; font-size:16px;">📢 2026 便民新制通 (完整版)</div>
+        <div class="header-title">📢 2026 新制上路 </div>
+        <div style="margin-top:5px; font-size:16px;">三一協會</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -304,3 +304,4 @@ with tab3:
 # 頁尾
 st.divider()
 st.markdown("<div style='text-align:center; color:#999; font-size:12px;'>© 2026 三一教育文化協會 | 資料來源：政府公告</div>", unsafe_allow_html=True)
+
