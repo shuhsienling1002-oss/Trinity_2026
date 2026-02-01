@@ -1,5 +1,4 @@
 import streamlit as st
-from datetime import date, datetime
 
 # ==========================================
 # 1. 系統設定
@@ -12,18 +11,18 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS 美學 (三一協會風格：穩重、清晰、強調重點)
+# 2. CSS 美學 (三一協會專屬藍色系)
 # ==========================================
 st.markdown("""
     <style>
     .stApp {
-        background-color: #F0F4F8; /* 淡灰藍底色，專業感 */
+        background-color: #F0F4F8;
         font-family: "Microsoft JhengHei", sans-serif;
     }
     
-    /* 標題區塊 */
+    /* 頂部標題區 */
     .header-box {
-        background: linear-gradient(135deg, #2C3E50 0%, #4CA1AF 100%);
+        background: linear-gradient(135deg, #0056b3 0%, #3399ff 100%);
         padding: 30px 20px;
         border-radius: 0 0 30px 30px;
         color: white;
@@ -33,187 +32,207 @@ st.markdown("""
         margin-top: -60px;
     }
     .header-title { font-size: 28px; font-weight: bold; letter-spacing: 1px; }
-    .header-subtitle { font-size: 16px; margin-top: 10px; opacity: 0.9; }
     
-    /* 緊急通知卡片 */
-    .urgent-card {
-        background-color: #FFF5F5;
-        border-left: 5px solid #E53E3E;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .urgent-title { color: #C53030; font-weight: bold; font-size: 18px; display: flex; align-items: center; }
-    
-    /* 一般資訊卡片 */
+    /* 資訊卡片 */
     .info-card {
         background: white;
-        padding: 15px;
-        border-radius: 12px;
-        margin-bottom: 12px;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 15px;
         border: 1px solid #E2E8F0;
-        transition: transform 0.2s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: 0.3s;
     }
     .info-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
+    
+    /* 標籤樣式 */
     .card-tag {
-        font-size: 12px;
-        padding: 2px 8px;
-        border-radius: 10px;
+        font-size: 13px;
+        padding: 4px 12px;
+        border-radius: 20px;
         color: white;
-        margin-right: 8px;
+        font-weight: bold;
         display: inline-block;
-        margin-bottom: 5px;
+        margin-bottom: 12px;
     }
+    .tag-labor { background-color: #3182CE; } /* 藍 */
+    .tag-money { background-color: #38A169; } /* 綠 */
+    .tag-health { background-color: #D69E2E; } /* 黃 */
+    .tag-life { background-color: #805AD5; } /* 紫 */
     
-    /* 標籤顏色定義 */
-    .tag-labor { background-color: #3182CE; } /* 藍：勞工 */
-    .tag-money { background-color: #38A169; } /* 綠：福利/錢 */
-    .tag-health { background-color: #D69E2E; } /* 黃：健康 */
-    .tag-life { background-color: #805AD5; } /* 紫：生活 */
-    
+    /* 按鈕優化 */
+    .stLinkButton > a {
+        border-radius: 10px !important;
+        background-color: #f8f9fa !important;
+        color: #0056b3 !important;
+        border: 1px solid #dee2e6 !important;
+        font-weight: bold !important;
+        transition: 0.3s;
+        text-align: center;
+    }
+    .stLinkButton > a:hover {
+        border-color: #0056b3 !important;
+        background-color: #e7f1ff !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. 資料庫建立
+# 3. 完整資料庫 (18項 + 連結)
 # ==========================================
 regulations = [
-    # 勞工與就業
-    {"cat": "勞工", "title": "最低工資調漲", "desc": "月薪升至 29,500 元，時薪 196 元。", "detail": "2026/1/1 生效，勞健保級距將同步調整。"},
-    {"cat": "勞工", "title": "勞保年金 60 歲領減 20%", "desc": "法定請領年齡調高至 65 歲。", "detail": "若 60 歲提前領，每提前 1 年扣 4%，5 年共扣 20%。"},
-    {"cat": "勞工", "title": "扣全勤須按比例", "desc": "請假不能直接扣光全勤獎金。", "detail": "針對家庭照顧假或事假，雇主不得因請假 1 小時就扣除全月獎金。"},
-    {"cat": "勞工", "title": "育嬰假以日計", "desc": "彈性請假，領 8 成薪。", "detail": "不再強制一次請長假，可按日申請，方便雙薪家庭調度。"},
-    {"cat": "勞工", "title": "教召改 14 天", "desc": "參加 1 次抵 2 次。", "detail": "針對退伍 8 年內夥伴，雖然天數變長，但能加速消耗召集額度。"},
-    
-    # 福利與補助
-    {"cat": "福利", "title": "綜所稅大減稅", "desc": "生活費調高至 21.3 萬。", "detail": "免稅額與標準扣除額同步調升，多口之家 2026 報稅時超有感。"},
-    {"cat": "福利", "title": "農保生育給付 10 萬", "desc": "雙胞胎可領 20 萬。", "detail": "減輕農友家庭負擔，補助金額翻倍。"},
-    {"cat": "福利", "title": "長照扣除額 18 萬", "desc": "家有需照顧者必看。", "detail": "綜所稅特別扣除額調升，減輕長照家庭稅負。"},
-    {"cat": "福利", "title": "租屋補貼排違建", "desc": "頂樓加蓋不再補助。", "detail": "新制排除頂加等違建，租屋族請務必確認房東的建物合法性。"},
-    {"cat": "福利", "title": "國旅住宿補貼", "desc": "平日入住最高領 2000。", "detail": "預計 4 月啟動。第一晚 800 元，續住加碼 1200 元 (限週日-週四)。"},
-    
-    # 醫療與健康
-    {"cat": "健康", "title": "長照 3.0 啟動", "desc": "納入年輕型失智症。", "detail": "新增智慧輔具租賃補助（如防跌倒偵測）。"},
-    {"cat": "健康", "title": "免費胃癌篩檢", "desc": "45-74 歲一生一次。", "detail": "公費胃幽門螺旋桿菌篩檢（糞便檢查），預防勝於治療。"},
-    {"cat": "健康", "title": "國民年金漲價", "desc": "每月自付額增 84 元。", "detail": "隨著物價指數調整費率。"},
-    
-    # 生活法規
-    {"cat": "生活", "title": "高齡換照降至 70 歲", "desc": "需通過體檢與認知測驗。", "detail": "2026 年 5 月起實施，換發駕照效期為 3 年。"},
-    {"cat": "生活", "title": "無照駕駛重罰", "desc": "累犯罰 6 萬 + 扣車。", "detail": "罰則大幅加重，並得沒入車輛，切勿以身試法。"},
-    {"cat": "生活", "title": "北捷 iPhone 進站", "desc": "預計 7 月解鎖功能。", "detail": "閘門系統更新，支援 Apple Pay 快速通關。"},
-    {"cat": "生活", "title": "家貓強制植晶片", "desc": "違者罰 1.5 萬。", "detail": "2026/1/1 開罰，請盡速帶貓咪至獸醫院完成寵物登記。"},
-    {"cat": "生活", "title": "原民身分登記 (緊急)", "desc": "1/5 期限將至！", "detail": "需回復傳統名字或並列羅馬拼音。若錯過，請把握最後 30 天補救期。"}
+    # --- 荷包/稅務 (福利) ---
+    {
+        "cat": "福利", "title": "綜所稅生活費調高即降稅", "desc": "免稅額調升，5月報稅自動適用。", 
+        "detail": "基本生活費調高至 21.3 萬，免申請。",
+        "url": "https://tax.nat.gov.tw/", "btn": "財政部稅務入口網"
+    },
+    {
+        "cat": "福利", "title": "最低工資調漲 2.95 萬", "desc": "月薪 29,500 / 時薪 196 元。", 
+        "detail": "2026/1/1 生效，勞健保級距同步調整。",
+        "url": "https://www.mol.gov.tw/", "btn": "勞動部公告"
+    },
+    {
+        "cat": "福利", "title": "勞保年金 60 歲領減 20%", "desc": "法定請領年齡調高至 65 歲。", 
+        "detail": "提早 5 年請領會被扣 20% 減給年金。",
+        "url": "https://www.bli.gov.tw/0000009.html", "btn": "勞保局年金專區"
+    },
+    {
+        "cat": "福利", "title": "農保生育給付增至 10 萬", "desc": "雙胞胎可領 20 萬。", 
+        "detail": "補助金額翻倍，減輕農友負擔。",
+        "url": "https://www.bli.gov.tw/0000009.html", "btn": "農保給付說明"
+    },
+    {
+        "cat": "福利", "title": "長照特別扣除額大調升", "desc": "每人調升至 18 萬元。", 
+        "detail": "報稅時適用，減輕照顧者負擔。",
+        "url": "https://www.ntbt.gov.tw/", "btn": "國稅局專區"
+    },
+    {
+        "cat": "福利", "title": "國民年金保費調漲", "desc": "每月自付額增加 84 元。", 
+        "detail": "隨物價指數調整費率。",
+        "url": "https://www.bli.gov.tw/0013552.html", "btn": "國保保費試算"
+    },
+    {
+        "cat": "福利", "title": "租金補貼排除頂加違建", "desc": "資格變嚴，僅限合法建物。", 
+        "detail": "頂樓加蓋將不再補助範圍內。",
+        "url": "https://pip.moi.gov.tw/V3/B/SCRB0102.aspx", "btn": "300億租金補貼專區"
+    },
+    {
+        "cat": "福利", "title": "國旅住宿補貼 800元/晚", "desc": "平日入住才有，續住加碼。", 
+        "detail": "預計 4 月開跑，需上網登錄證件。",
+        "url": "https://gostay.tbroc.gov.tw/", "btn": "台灣旅宿網(待更新)"
+    },
+
+    # --- 職場/勞保 (勞工) ---
+    {
+        "cat": "勞工", "title": "勞工請假扣全勤限制", "desc": "必須「按比例」扣發。", 
+        "detail": "不能因請假 1 小時就扣光整月全勤。",
+        "url": "https://www.mol.gov.tw/1607/28162/28166/28268/", "btn": "勞動部請假規定"
+    },
+    {
+        "cat": "勞工", "title": "育嬰假以日計領 8 成薪", "desc": "更彈性，不需一次請長假。", 
+        "detail": "方便雙薪家庭短期調度。",
+        "url": "https://www.bli.gov.tw/0017280.html", "btn": "育嬰留停津貼申請"
+    },
+    {
+        "cat": "勞工", "title": "教召改 14 天退 8 年召 2 次", "desc": "新制教召，1 次抵 2 次。", 
+        "detail": "針對退伍 8 年內後備軍人。",
+        "url": "https://afrc.mnd.gov.tw/EFR/index.aspx", "btn": "後備軍人召集查詢"
+    },
+
+    # --- 醫療/長照 (健康) ---
+    {
+        "cat": "健康", "title": "長照 3.0 啟動", "desc": "納入年輕型失智症。", 
+        "detail": "增加智慧輔具租賃補助。",
+        "url": "https://1966.gov.tw/LTC/mp-201.html", "btn": "長照 2.0/3.0 專區"
+    },
+    {
+        "cat": "健康", "title": "免費胃癌篩檢", "desc": "45-74 歲終身 1 次免費。", 
+        "detail": "公費胃幽門螺旋桿菌篩檢。",
+        "url": "https://www.hpa.gov.tw/Pages/List.aspx?nodeid=24", "btn": "癌症篩檢資格查詢"
+    },
+
+    # --- 生活/交通 (生活) ---
+    {
+        "cat": "生活", "title": "高齡換照降至 70 歲", "desc": "需體檢+認知測驗。", 
+        "detail": "2026/5 起實施，駕照效期 3 年。",
+        "url": "https://www.mvdis.gov.tw/", "btn": "監理服務網"
+    },
+    {
+        "cat": "生活", "title": "無照駕駛重罰 6 萬", "desc": "累犯罰 6 萬 + 扣車。", 
+        "detail": "得沒入車輛，罰則大幅加重。",
+        "url": "https://www.mvdis.gov.tw/", "btn": "交通違規罰則查詢"
+    },
+    {
+        "cat": "生活", "title": "北捷 7 月解鎖 iPhone 進站", "desc": "Apple Pay 快速通關。", 
+        "detail": "閘門系統更新，支援手機感應。",
+        "url": "https://www.metro.taipei/", "btn": "台北捷運公告"
+    },
+    {
+        "cat": "生活", "title": "家貓植晶片", "desc": "違者最高罰 1.5 萬。", 
+        "detail": "請至獸醫院完成寵物登記。",
+        "url": "https://www.pet.gov.tw/", "btn": "寵物登記管理資訊網"
+    },
+    {
+        "cat": "生活", "title": "原民身分登記 (1/5前)", "desc": "未回復傳統名恐失效。", 
+        "detail": "最後補救期 30 天，請速洽戶政。",
+        "url": "https://www.ris.gov.tw/app/portal/671", "btn": "全國戶政據點查詢"
+    }
 ]
 
 # ==========================================
-# 4. 頁面內容
+# 4. 頁面邏輯
 # ==========================================
 
-# Header
+# 標題
 st.markdown("""
     <div class="header-box">
-        <div class="header-title">⚖️ 2026 新制度權益通</div>
-        <div class="header-subtitle">三一教育文化協會 關心您的權益</div>
+        <div class="header-title">三一協會</div>
+        <div style="margin-top:5px; font-size:16px;">📢 2026 便民新制通 (完整版)</div>
     </div>
 """, unsafe_allow_html=True)
 
-# 緊急通知區 (動態判斷日期)
-today = date.today()
-deadline = date(2026, 1, 5)
-days_left = (deadline - today).days
+# 篩選器
+categories = ["全部", "福利", "勞工", "健康", "生活"]
+selected_cat = st.selectbox("請選擇您想了解的類別：", categories)
 
-if days_left < 30: # 假設在期限前後
+# 過濾資料
+if selected_cat == "全部":
+    display_data = regulations
+else:
+    display_data = [r for r in regulations if r['cat'] == selected_cat]
+
+# 顯示內容
+st.write(f"共找到 **{len(display_data)}** 項相關新制")
+
+for item in display_data:
+    # 決定顏色
+    color_map = {"福利": "tag-money", "勞工": "tag-labor", "健康": "tag-health", "生活": "tag-life"}
+    tag_class = color_map.get(item['cat'], "tag-life")
+    
+    # 卡片 HTML
     st.markdown(f"""
-    <div class="urgent-card">
-        <div class="urgent-title">🔥 緊急提醒：原住民身分登記</div>
-        <p style="margin-top: 10px;">
-            <b>還有機會補救！</b> 依據新法，若您尚未完成「回復傳統名字」或「並列羅馬拼音」，
-            請務必在 <b>2026/1/5</b> 前（或隨後的 30 天補救期內）前往戶政事務所辦理，以免喪失身分。
-        </p>
+    <div class="info-card">
+        <span class="card-tag {tag_class}">{item['cat']}</span>
+        <h3 style="margin: 0 0 8px 0; font-size: 20px; color: #2d3748;">{item['title']}</h3>
+        <div style="color:#4a5568; margin-bottom:8px; font-weight:bold;">{item['desc']}</div>
+        <div style="font-size:14px; color:#718096; line-height: 1.5;">💡 {item['detail']}</div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # 外部連結按鈕 (滿版)
+    if "url" in item:
+        st.link_button(
+            label=f"🔗 {item['btn']}", 
+            url=item['url'], 
+            use_container_width=True
+        )
+    
+    st.write("") # 間距
 
-# Main Tabs
-tab1, tab2, tab3 = st.tabs(["📜 18項制度懶人包", "✅ 您的行動清單", "🔍 協會補充觀點"])
-
-# --- Tab 1: 制度介紹 ---
-with tab1:
-    st.markdown("### 2026 關鍵新制一覽")
-    
-    # 篩選器
-    filter_cat = st.multiselect("篩選類別", ["勞工", "福利", "健康", "生活"], default=["勞工", "福利", "健康", "生活"])
-    
-    cols = st.columns(2)
-    
-    filtered_data = [r for r in regulations if r['cat'] in filter_cat]
-    
-    for i, item in enumerate(filtered_data):
-        # 決定顏色標籤
-        color_class = {
-            "勞工": "tag-labor",
-            "福利": "tag-money",
-            "健康": "tag-health",
-            "生活": "tag-life"
-        }.get(item['cat'], "tag-life")
-        
-        with cols[i % 2]:
-            st.markdown(f"""
-            <div class="info-card">
-                <div><span class="card-tag {color_class}">{item['cat']}</span></div>
-                <div style="font-weight:bold; font-size:16px; margin-top:5px;">{item['title']}</div>
-                <div style="color:#555; font-size:14px; margin: 5px 0;">{item['desc']}</div>
-                <div style="color:#718096; font-size:12px; border-top:1px solid #eee; padding-top:5px;">
-                    💡 {item['detail']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-# --- Tab 2: 辦理方式 ---
-with tab2:
-    st.markdown("### 📝 請立即檢查以下項目")
-    st.caption("三一協會幫您整理了需要「採取行動」的項目，請逐一打勾確認。")
-    
-    st.markdown("#### 🔴 最緊急")
-    c1 = st.checkbox("【原民身分】檢查戶口名簿，確認是否已回復傳統名或並列羅馬拼音？(期限緊迫)")
-    
-    st.markdown("#### 🟠 建議盡快")
-    c2 = st.checkbox("【貓奴注意】檢查家貓是否已植入晶片並完成寵物登記？(違者罰1.5萬)")
-    c3 = st.checkbox("【高齡駕駛】家中是否有滿 70 歲長輩？提醒留意換照通知單。")
-    
-    st.markdown("#### 🔵 年度規劃")
-    c4 = st.checkbox("【健康檢查】滿 45 歲了嗎？預約免費胃幽門螺旋桿菌篩檢。")
-    c5 = st.checkbox("【旅遊規劃】4月起平日國旅有補助，記得先上網登錄資料。")
-    
-    st.info("💡 只要完成上述打勾項目，您就避開了 90% 的新制風險！")
-
-# --- Tab 3: 協會補充 ---
-with tab3:
-    st.markdown("### 🔍 還有什麼被漏掉了？")
-    st.markdown("圖表中未列出，但**三一協會**認為對大家影響很大的趨勢：")
-    
-    st.markdown("""
-    #### 1. 🌍 碳費正式開徵 (物價波動預警)
-    * **內容**：2026 年起針對排碳大戶徵收碳費。
-    * **影響**：雖然不直接對民眾收錢，但水泥、鋼鐵、電力成本可能轉嫁，需留意物價波動。
-    
-    #### 2. 🚗 電動車免稅延長
-    * **內容**：電動車免徵使用牌照稅優惠，確認延長至 2030 年。
-    * **建議**：若今年有購車需求，電動車仍是稅務上的首選。
-    
-    #### 3. 💼 勞保級距隨之調整
-    * **內容**：配合基本工資漲至 29,500 元，勞保投保薪資「第 1 級」也將同步調升。
-    * **影響**：雇主與勞工每個月需繳的保費會稍微變多一點點，但未來的保障也隨之提高。
-    """)
-    
-    st.divider()
-    st.markdown("#### 📺 推薦觀看影片")
-    st.video("https://www.youtube.com/watch?v=9SkfgNnI3_E")
-    st.caption("影片：登記原民身分展延 1/5 起 30 日內還可申請補辦 (來源：原視新聞)")
-
-# Footer
-st.markdown("---")
-st.markdown("<div style='text-align:center; color:#888;'>© 2026 三一教育文化協會 | 資料來源：政府公告與 AI 彙整</div>", unsafe_allow_html=True)
+# 頁尾
+st.divider()
+st.markdown("<div style='text-align:center; color:#999; font-size:12px;'>© 2026 三一教育文化協會 | 資料來源：政府公告</div>", unsafe_allow_html=True)
