@@ -1,390 +1,308 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 設定頁面 (這是 Python 語法)
+# ==========================================
+# 1. 系統設定 (手機版優化)
+# ==========================================
 st.set_page_config(
-    page_title="復興區長者福利試算系統",
-    page_icon="⛰️",
-    layout="wide",
+    page_title="三一協會便民APP",
+    page_icon="📱",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# 把 HTML 網頁程式碼包在一個變數裡 (這是 Python 字串)
-html_code = """
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>復興區長者福利試算系統</title>
-    <style>
-        /* === 核心設計風格 === */
-        :root {
-            --primary-color: #2E8B57; /* 復興區綠 */
-            --secondary-color: #3CB371;
-            --highlight-color: #d63384; /* 金額桃紅 */
-            --bg-color: #ffffff;
-        }
-
-        body {
-            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-            color: #333;
-            /* 隱藏捲軸但允許捲動 */
-            overflow-y: auto; 
-        }
-
-        /* === 頂部標題區 (蘇佐璽區長形象) === */
-        .header-box {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            padding: 30px 20px 40px 20px;
-            color: white;
-            text-align: center;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            box-shadow: 0 4px 10px rgba(46, 139, 87, 0.3);
-            margin-bottom: -30px;
-            position: relative;
-            z-index: 2;
-        }
-        .header-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        .header-subtitle { font-size: 16px; opacity: 0.95; }
-        .mayor-name { font-weight: 900; font-size: 18px; border-bottom: 2px solid rgba(255,255,255,0.5); padding-bottom: 2px;}
-
-        /* === 內容容器 === */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0 15px;
-            padding-bottom: 80px; /* 預留底部空間 */
-            position: relative;
-            z-index: 1;
-        }
-
-        /* === 輸入卡片 === */
-        .input-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-        .section-title::before {
-            content: '';
-            display: inline-block;
-            width: 5px;
-            height: 20px;
-            background-color: var(--primary-color);
-            margin-right: 10px;
-            border-radius: 3px;
-        }
-
-        /* === 表單元件 === */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        
-        .age-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 18px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        input[type="number"]:focus { border-color: var(--primary-color); }
-
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            user-select: none;
-        }
-        .checkbox-item input { margin-right: 10px; transform: scale(1.2); accent-color: var(--primary-color); }
-
-        /* === 標籤切換 (Tabs) === */
-        .tabs {
-            display: flex;
-            background: white;
-            border-radius: 10px;
-            padding: 5px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            overflow-x: auto;
-            border: 1px solid #eee;
-        }
-        .tab-btn {
-            flex: 1;
-            border: none;
-            background: none;
-            padding: 10px 5px;
-            font-size: 15px;
-            color: #666;
-            cursor: pointer;
-            border-radius: 8px;
-            white-space: nowrap;
-        }
-        .tab-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: bold;
-        }
-
-        /* === 福利結果卡片 === */
-        .benefit-list { display: none; }
-        .benefit-list.active { display: block; animation: fadeIn 0.5s; }
-
-        .result-card {
-            background: white;
-            border-left: 5px solid var(--primary-color);
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            position: relative;
-        }
-        .result-card.highlight {
-            border-left-color: #FFD700;
-            background-color: #fffbea;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .benefit-name { font-size: 17px; font-weight: bold; color: #333; }
-        .location-tag { 
-            font-size: 12px; color: #666; 
-            background: #f0f0f0; padding: 3px 8px; border-radius: 10px; 
-        }
-        .money-text { font-size: 20px; font-weight: 900; color: var(--highlight-color); margin-bottom: 5px; }
-        .note-text { font-size: 14px; color: #666; line-height: 1.4; }
-        
-        .locked-item {
-            opacity: 0.6;
-            background: #f8f8f8;
-            border-left-color: #ccc;
-            display: none; 
-        }
-        .show-locked .locked-item { display: block; }
-
-        /* === 底部資訊 === */
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 13px;
-            color: #888;
-            padding: 20px;
-            background: #f1f3f5;
-            border-radius: 15px;
-        }
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .contact-title { font-weight: bold; color: var(--primary-color); margin-bottom: 5px; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="header-box">
-        <div class="header-title">⛰️ 復興區長者福利小幫手</div>
-        <div class="header-subtitle">桃園市復興區長 <span class="mayor-name">蘇佐璽</span> 關心您 ❤️</div>
-    </div>
-
-    <div class="container">
-        <div class="input-card">
-            <div class="section-title">請勾選長輩狀況</div>
-            
-            <div class="form-group">
-                <label>長輩年齡 (歲)</label>
-                <div class="age-input-group">
-                    <input type="number" id="age" value="55" min="50" max="120" oninput="calculate()">
-                    <span style="font-size: 14px; color: #666;">(本系統以原住民身分試算)</span>
-                </div>
-            </div>
-
-            <div class="checkbox-grid">
-                <label class="checkbox-item"><input type="checkbox" id="is_farmer" onchange="calculate()"> 🌱 農保身分</label>
-                <label class="checkbox-item"><input type="checkbox" id="is_low_income" onchange="calculate()"> 📉 中低收入</label>
-                <label class="checkbox-item"><input type="checkbox" id="has_disability" onchange="calculate()"> ♿ 身障手冊</label>
-                <label class="checkbox-item"><input type="checkbox" id="is_owner" onchange="calculate()"> 🏠 自有住宅</label>
-                <label class="checkbox-item"><input type="checkbox" id="is_renter" onchange="calculate()"> 🔑 租賃房屋</label>
-                <label class="checkbox-item"><input type="checkbox" id="grandparenting" onchange="calculate()"> 👶 照顧孫子女</label>
-            </div>
-        </div>
-
-        <div class="section-title">💰 您的專屬福利試算結果</div>
-        
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tab1', this)">💵 現金津貼</button>
-            <button class="tab-btn" onclick="switchTab('tab2', this)">🩺 醫療照護</button>
-            <button class="tab-btn" onclick="switchTab('tab3', this)">🏠 居住交通</button>
-            <button class="tab-btn" onclick="switchTab('tab4', this)">🛡️ 其他權益</button>
-        </div>
-
-        <div id="tab1" class="benefit-list active"></div>
-        <div id="tab2" class="benefit-list"></div>
-        <div id="tab3" class="benefit-list"></div>
-        <div id="tab4" class="benefit-list"></div>
-
-        <div style="text-align: center; margin-top: 10px;">
-            <label style="font-size: 14px; color: #666; cursor: pointer;">
-                <input type="checkbox" id="show_all" onchange="toggleLocked()"> 顯示未符合項目
-            </label>
-        </div>
-
-        <div class="footer">
-            <div class="contact-grid">
-                <div>
-                    <div class="contact-title">📞 服務專線</div>
-                    <div>🔹 復興區公所：(03) 382-1500</div>
-                    <div>🔹 市民專線：1999</div>
-                </div>
-                <div>
-                    <div class="contact-title">🏥 照護資源</div>
-                    <div>🔸 長照專線：1966</div>
-                    <div>🔸 衛生所：(03) 382-2325</div>
-                </div>
-            </div>
-            <div>⚠️ 本試算系統僅供參考，實際資格以政府機關最新核定為準。</div>
-        </div>
-    </div>
-
+# ==========================================
+# 2. LINE 瀏覽器脫逃模組 (新增功能) 🚀
+# ==========================================
+# 這段 JavaScript 會自動偵測是否為 LINE 瀏覽器
+# 如果是，它會在頂部顯示一個「切換瀏覽器」的按鈕，這是解決 LINE 連結問題的唯一解法
+def line_browser_fix():
+    js_code = """
     <script>
-        const benefits = [
-            { tab: 'tab1', name: "桃園老人三節禮金", money: "$2,500/每節 (年領$7,500)", note: "原住民55歲設籍滿6個月", unit: "區公所社會課", check: (d) => d.age >= 55 },
-            { tab: 'tab1', name: "桃園重陽敬老金", money: "$2,500/年", note: "原住民55歲 (一般65歲)", unit: "區公所社會課", check: (d) => d.age >= 55 },
-            { tab: 'tab1', name: "原住民給付 (國保)", money: "$4,049/月", note: "55-64歲專屬 (與老農互斥)", unit: "區公所原民課", check: (d) => d.age >= 55 && d.age < 65 && !d.is_farmer },
-            { tab: 'tab1', name: "老農津貼", money: "$8,110/月", note: "農保年資滿15年", unit: "地區農會", check: (d) => d.is_farmer && d.age >= 65 },
-            { tab: 'tab1', name: "桃園原民急難救助", money: "最高3萬", note: "意外/重病/死亡 (3個月內申請)", unit: "區公所原民課", check: (d) => true },
-            { tab: 'tab1', name: "弱勢兒少托育(隔代)", money: "$3,000起/月", note: "祖父母照顧孫子女補助", unit: "區公所社會課", check: (d) => d.grandparenting && d.is_low_income },
-
-            { tab: 'tab2', name: "桃園原民假牙補助", money: "最高4.4萬", note: "需先至診所估價", unit: "區公所原民課", check: (d) => d.age >= 55 },
-            { tab: 'tab2', name: "健保費全額補助", money: "全額減免", note: "55-64歲原住民 (系統自動減免)", unit: "健保局", check: (d) => d.age >= 55 },
-            { tab: 'tab2', name: "成人健康檢查", money: "免費", note: "每年一次 (原住民提早至55歲)", unit: "衛生所", check: (d) => d.age >= 55 },
-            { tab: 'tab2', name: "身障輔具補助", money: "全額/部分", note: "助聽器/氣墊床等", unit: "區公所社會課", check: (d) => d.has_disability },
-
-            { tab: 'tab3', name: "復興區敬老愛心卡", money: "每月1000點", note: "復興區民專屬福利 (一般區800點)", unit: "區公所社會課", check: (d) => d.age >= 55, highlight: true },
-            { tab: 'tab3', name: "愛心計程車", money: "點數折抵", note: "單趟100元以下補36點", unit: "各大車隊", check: (d) => d.age >= 55 },
-            { tab: 'tab3', name: "桃園修繕住宅補助", money: "最高15萬", note: "屋頂/衛浴修繕 (需自有)", unit: "區公所原民課", check: (d) => d.is_owner },
-            { tab: 'tab3', name: "桃園建購住宅補助", money: "最高22萬", note: "購買或自建房屋", unit: "區公所原民課", check: (d) => d.is_owner },
-            { tab: 'tab3', name: "租金補貼 (300億)", money: "依等級 ($3000起)", note: "租屋者可申請", unit: "營建署", check: (d) => d.is_renter },
-
-            { tab: 'tab4', name: "農保喪葬津貼", money: "$153,000", note: "農民身故 (由家屬請領)", unit: "農會保險部", check: (d) => d.is_farmer },
-            { tab: 'tab4', name: "國保喪葬給付", money: "約9.8萬", note: "一般國保身故 (由家屬請領)", unit: "勞保局", check: (d) => !d.is_farmer },
-            { tab: 'tab4', name: "原住民法律扶助", money: "律師費全免", note: "訴訟/法律諮詢", unit: "法扶基金會", check: (d) => true },
-            { tab: 'tab4', name: "意外保險 (微型)", money: "最高30萬", note: "市府代為投保", unit: "社會局", check: (d) => d.is_low_income }
-        ];
-
-        function calculate() {
-            const data = {
-                age: parseInt(document.getElementById('age').value) || 0,
-                is_farmer: document.getElementById('is_farmer').checked,
-                is_low_income: document.getElementById('is_low_income').checked,
-                has_disability: document.getElementById('has_disability').checked,
-                is_owner: document.getElementById('is_owner').checked,
-                is_renter: document.getElementById('is_renter').checked,
-                grandparenting: document.getElementById('grandparenting').checked
-            };
-
-            ['tab1', 'tab2', 'tab3', 'tab4'].forEach(id => {
-                document.getElementById(id).innerHTML = '';
-            });
-
-            benefits.forEach((item, index) => {
-                const qualify = item.check(data);
-                const container = document.getElementById(item.tab);
-                
-                let className = "result-card";
-                if (item.highlight && qualify) className += " highlight";
-                if (!qualify) className += " locked-item";
-
-                const html = `
-                    <div class="${className}">
-                        <div class="card-header">
-                            <span class="benefit-name">${index + 1}. ${item.name}</span>
-                            <span class="location-tag">${item.unit}</span>
-                        </div>
-                        ${qualify ? `<div class="money-text">${item.money}</div>` : ''}
-                        <div class="note-text">
-                            ${qualify ? '💡' : '🔒'} ${item.note} 
-                            ${!qualify ? '(未符條件)' : ''}
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += html;
-            });
-            toggleLocked();
-        }
-
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.benefit-list').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        function toggleLocked() {
-            const show = document.getElementById('show_all').checked;
-            const container = document.querySelector('.container');
-            if(show) container.classList.add('show-locked');
-            else container.classList.remove('show-locked');
-        }
-
-        // 初始化
-        calculate();
+        document.addEventListener('DOMContentLoaded', function() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            // 偵測 LINE 內建瀏覽器
+            if (userAgent.indexOf("Line") > -1) {
+                // 檢查網址是否已經包含脫逃參數
+                if (window.location.href.indexOf("openExternalBrowser=1") === -1) {
+                    
+                    // 建立一個置頂的提示條
+                    var banner = document.createElement("div");
+                    banner.style.position = "fixed";
+                    banner.style.top = "0";
+                    banner.style.left = "0";
+                    banner.style.width = "100%";
+                    banner.style.zIndex = "999999";
+                    banner.style.backgroundColor = "#ff4b4b"; // 醒目的紅色
+                    banner.style.color = "white";
+                    banner.style.textAlign = "center";
+                    banner.style.padding = "15px";
+                    banner.style.fontSize = "16px";
+                    banner.style.fontWeight = "bold";
+                    banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+                    banner.style.cursor = "pointer";
+                    banner.innerHTML = "⚠️ 檢測到 LINE 瀏覽器，連結可能失效<br>👉 點此切換至【完整瀏覽器】開啟 👈";
+                    
+                    // 點擊後強制用系統瀏覽器打開
+                    banner.onclick = function() {
+                        var separator = window.location.href.indexOf('?') > -1 ? '&' : '?';
+                        var newUrl = window.location.href + separator + 'openExternalBrowser=1';
+                        window.location.href = newUrl;
+                    };
+                    
+                    document.body.prepend(banner);
+                }
+            }
+        });
     </script>
-</body>
-</html>
-"""
+    """
+    components.html(js_code, height=0)
 
-# 渲染 HTML (這裡才是 Python 的指令)
-# height 設定高一點，避免出現雙重捲軸
-components.html(html_code, height=1200, scrolling=True)
+line_browser_fix()
 
-# 再次嘗試強制隱藏 Streamlit 外框 (不保證 100% 成功，但盡力而為)
+# ==========================================
+# 3. CSS 美學 (手機觸控 + 勾選優化)
+# ==========================================
 st.markdown("""
     <style>
-        /* 隱藏上方選單 */
-        header {visibility: hidden;}
-        /* 隱藏底部 Footer */
-        footer {visibility: hidden;}
-        .stApp { margin-top: -60px; }
+    /* 全站基礎 */
+    .stApp {
+        background-color: #f2f2f7; /* iOS 淺灰背景 */
+        font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", sans-serif;
+    }
+    
+    /* 隱藏官方元件 */
+    header {visibility: hidden;}
+    footer {display: none !important;}
+    
+    /* 手機版頂部 Header (固定式質感) */
+    .mobile-header {
+        background: linear-gradient(180deg, #007AFF 0%, #0063CC 100%);
+        padding: 25px 20px 20px 20px;
+        color: white;
+        text-align: center;
+        border-radius: 0 0 25px 25px;
+        margin-top: -60px; /* 預留空間給 LINE 提示條 */
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+    }
+    .app-title { font-size: 26px; font-weight: 900; letter-spacing: 1px; }
+    .app-subtitle { font-size: 14px; opacity: 0.95; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; display: inline-block; margin-top: 5px;}
+    
+    /* 資訊卡片容器 */
+    .mobile-card-container {
+        background: white;
+        padding: 20px;
+        border-radius: 18px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid #eee;
+    }
+    
+    /* 卡片內容樣式 */
+    .card-title {
+        font-size: 19px;
+        font-weight: bold;
+        color: #1c1c1e;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+    
+    /* 辦理方式區塊 */
+    .method-box {
+        background-color: #f2f2f7;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        color: #3a3a3c;
+        margin-bottom: 15px;
+        margin-top: 10px;
+        border-left: 4px solid #007AFF;
+    }
+    
+    /* 分類標籤 */
+    .tag {
+        font-size: 12px;
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 6px;
+        color: white;
+        display: inline-block;
+        margin-bottom: 5px;
+    }
+    
+    /* 選單優化 */
+    .stRadio > div {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 5px;
+    }
+    .stRadio label {
+        background-color: white !important;
+        border: 1px solid #ddd;
+        padding: 8px 12px !important;
+        border-radius: 20px !important;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    /* 按鈕優化 */
+    .stButton button {
+        width: 100%;
+        border-radius: 12px;
+        height: 42px;
+        font-weight: 600;
+    }
+    
+    /* 備忘錄區塊 */
+    .memo-box {
+        background: #fffbea;
+        border: 2px dashed #ffd700;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 20px;
+    }
     </style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 4. 完整資料庫 (18項新制 + 連結)
+# ==========================================
+data = [
+    # 💰 荷包/稅務
+    {"id": 1, "cat": "💰 荷包/稅務", "title": "綜所稅生活費調高即降稅", "icon": "📉", "color": "#34C759",
+     "method": "5月報稅自動適用，免申請。符合扶養條件系統會自動扣除。", "link": "https://tax.nat.gov.tw/", "btn": "前往報稅網"},
+    {"id": 2, "cat": "💰 荷包/稅務", "title": "國民年金保費調漲84元", "icon": "💸", "color": "#34C759",
+     "method": "依收到的繳款單繳納，建議設定銀行帳戶自動扣繳。", "link": "https://www.bli.gov.tw/0013605.html", "btn": "國保專區"},
+    {"id": 3, "cat": "💰 荷包/稅務", "title": "租金補貼排除頂加違建", "icon": "🏠", "color": "#34C759",
+     "method": "線上申請，需準備租約與存摺。注意房屋稅籍需符合規定。", "link": "https://pip.moi.gov.tw/V3/B/SCRB0102.aspx", "btn": "線上申請"},
+    {"id": 4, "cat": "💰 荷包/稅務", "title": "國旅住宿補貼800元/晚", "icon": "🧳", "color": "#34C759",
+     "method": "入住前至「台灣旅宿網」上傳身分證，入住時折抵。", "link": "https://taiwanstay.net.tw/", "btn": "登錄證件"},
+
+    # 💼 職場/勞保
+    {"id": 5, "cat": "💼 職場/勞保", "title": "最低工資調漲至2.95萬", "icon": "💵", "color": "#007AFF",
+     "method": "無需申請。若薪資低於標準，可向勞工局申訴。", "link": "https://www.mol.gov.tw/", "btn": "勞動部官網"},
+    {"id": 6, "cat": "💼 職場/勞保", "title": "勞保年金60歲領年減4%", "icon": "📉", "color": "#007AFF",
+     "method": "向勞保局申請。建議先試算最划算的請領年齡。", "link": "https://edesk.bli.gov.tw/na/", "btn": "年金試算"},
+    {"id": 7, "cat": "💼 職場/勞保", "title": "農保生育給付增至10萬", "icon": "👶", "color": "#007AFF",
+     "method": "備妥出生證明，向投保農會提出申請。", "link": "https://www.bli.gov.tw/0013605.html", "btn": "申請書下載"},
+    {"id": 8, "cat": "💼 職場/勞保", "title": "勞工請假按比例扣全勤", "icon": "📝", "color": "#007AFF",
+     "method": "依公司規定。若雇主違法扣薪，可申請調解。", "link": "https://labor-elearning.mol.gov.tw/", "btn": "權益查詢"},
+    {"id": 9, "cat": "💼 職場/勞保", "title": "育嬰假以日計領8成薪", "icon": "🍼", "color": "#007AFF",
+     "method": "向雇主請假後，向勞保局申請「育嬰留職停薪津貼」。", "link": "https://www.bli.gov.tw/0017280.html", "btn": "線上申辦"},
+
+    # 🏥 醫療/長照
+    {"id": 10, "cat": "🏥 醫療/長照", "title": "長照3.0啟動第2、3階段", "icon": "👵", "color": "#FF3B30",
+     "method": "手機直接撥打「1966」長照專線，專人到府評估。", "link": "https://1966.gov.tw/", "btn": "1966 專區"},
+    {"id": 11, "cat": "🏥 醫療/長照", "title": "長照特別扣除額大調升", "icon": "🧾", "color": "#FF3B30",
+     "method": "5月報稅申報。需檢附身心障礙證明或失能核定函。", "link": "https://www.etax.nat.gov.tw/", "btn": "扣除額說明"},
+    {"id": 12, "cat": "🏥 醫療/長照", "title": "免費胃癌篩檢限一生1次", "icon": "🩺", "color": "#FF3B30",
+     "method": "45-74歲民眾，持健保卡至特約院所即可。", "link": "https://www.hpa.gov.tw/", "btn": "查詢院所"},
+
+    # 🚗 生活/交通
+    {"id": 13, "cat": "🚗 生活/交通", "title": "老人換駕照降到70歲", "icon": "🪪", "color": "#FF9500",
+     "method": "收到通知後，至監理站體檢與認知測驗，合格換發。", "link": "https://www.mvdis.gov.tw/", "btn": "監理服務網"},
+    {"id": 14, "cat": "🚗 生活/交通", "title": "無照駕駛累犯罰6萬", "icon": "👮", "color": "#FF9500",
+     "method": "違規查詢與繳款，可上監理服務網。", "link": "https://www.mvdis.gov.tw/m3-emv-vil/vil/penaltyQuery", "btn": "罰單查詢"},
+    {"id": 15, "cat": "🚗 生活/交通", "title": "教召改14天退8年召2次", "icon": "🪖", "color": "#FF9500",
+     "method": "上「後備軍人網路服務臺」查詢年度教召資訊。", "link": "https://afrc.mnd.gov.tw/EFR/FAQ.aspx", "btn": "教召查詢"},
+    {"id": 16, "cat": "🚗 生活/交通", "title": "北捷7月解鎖iPhone進站", "icon": "📱", "color": "#FF9500",
+     "method": "屆時將iPhone綁定快速交通卡即可感應。", "link": "https://www.metro.taipei/", "btn": "北捷官網"},
+    {"id": 17, "cat": "🚗 生活/交通", "title": "家貓植晶片違者罰款", "icon": "🐱", "color": "#FF9500",
+     "method": "帶貓咪至動物醫院施打晶片並辦理寵物登記。", "link": "https://www.pet.gov.tw/", "btn": "寵物登記網"},
+    {"id": 18, "cat": "🚗 生活/交通", "title": "原民身分登記限期1/5前", "icon": "📝", "color": "#FF9500",
+     "method": "攜帶身分證、戶口名簿至任一戶政事務所辦理。", "link": "https://www.ris.gov.tw/", "btn": "戶政司官網"},
+]
+
+# ==========================================
+# 5. 手機版頭部
+# ==========================================
+st.markdown("""
+    <div class="mobile-header">
+        <div class="app-title">三一協會</div>
+        <div class="app-subtitle">2026 便民新制通 📢</div>
+    </div>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 6. 導航與狀態管理
+# ==========================================
+if "checklist" not in st.session_state:
+    st.session_state.checklist = []
+
+category = st.radio(
+    "分類導航",
+    ["全部", "💰 荷包/稅務", "💼 職場/勞保", "🏥 醫療/長照", "🚗 生活/交通"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+# 篩選資料
+if category == "全部":
+    display_items = data
+else:
+    display_items = [item for item in data if item["cat"] == category]
+
+st.write("") 
+
+# ==========================================
+# 7. 動態牆 (含勾選功能)
+# ==========================================
+for item in display_items:
+    with st.container():
+        # 版面配置：左邊主要內容 (0.85)，右邊勾選框 (0.15)
+        col_content, col_check = st.columns([0.85, 0.15])
+        
+        with col_content:
+            st.markdown(f"""
+            <div class="mobile-card-container">
+                <span class="tag" style="background-color: {item['color']};">{item['cat'].split(" ")[1]}</span>
+                <div class="card-title">{item['icon']} {item['title']}</div>
+                <div class="method-box">
+                    <b>💡 辦理方式：</b><br>{item['method']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # 按鈕獨立放置
+            st.link_button(f"🔗 {item['btn']}", item['link'], use_container_width=True)
+            
+        with col_check:
+            st.write("")
+            st.write("")
+            
+            is_checked = item['title'] in st.session_state.checklist
+            
+            if st.checkbox("", key=f"chk_{item['id']}", value=is_checked):
+                if item['title'] not in st.session_state.checklist:
+                    st.session_state.checklist.append(item['title'])
+            else:
+                if item['title'] in st.session_state.checklist:
+                    st.session_state.checklist.remove(item['title'])
+        
+        st.write("---") 
+
+# ==========================================
+# 8. 我的備忘錄 (自動生成)
+# ==========================================
+if st.session_state.checklist:
+    st.markdown("""<div class="memo-box">""", unsafe_allow_html=True)
+    st.subheader("📝 我的待辦清單")
+    st.caption("這是您勾選的項目，請截圖保存！")
+    
+    for i, title in enumerate(st.session_state.checklist):
+        st.markdown(f"**{i+1}. {title}**")
+        
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 9. 底部版權
+# ==========================================
+st.markdown("""
+    <div style="text-align: center; margin-top: 30px; padding-bottom: 20px; color: #8e8e93; font-size: 12px;">
+    三一協會 © 2026<br>
+    Designed for Mobile
+    </div>
 """, unsafe_allow_html=True)
