@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 # ==========================================
 # 1. 系統設定 (手機版優化)
@@ -11,7 +12,56 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS 美學 (手機觸控 + 勾選優化)
+# 2. LINE 瀏覽器脫逃模組 (新增功能) 🚀
+# ==========================================
+# 這段 JavaScript 會自動偵測是否為 LINE 瀏覽器
+# 如果是，它會在頂部顯示一個「切換瀏覽器」的按鈕，這是解決 LINE 連結問題的唯一解法
+def line_browser_fix():
+    js_code = """
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            // 偵測 LINE 內建瀏覽器
+            if (userAgent.indexOf("Line") > -1) {
+                // 檢查網址是否已經包含脫逃參數
+                if (window.location.href.indexOf("openExternalBrowser=1") === -1) {
+                    
+                    // 建立一個置頂的提示條
+                    var banner = document.createElement("div");
+                    banner.style.position = "fixed";
+                    banner.style.top = "0";
+                    banner.style.left = "0";
+                    banner.style.width = "100%";
+                    banner.style.zIndex = "999999";
+                    banner.style.backgroundColor = "#ff4b4b"; // 醒目的紅色
+                    banner.style.color = "white";
+                    banner.style.textAlign = "center";
+                    banner.style.padding = "15px";
+                    banner.style.fontSize = "16px";
+                    banner.style.fontWeight = "bold";
+                    banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+                    banner.style.cursor = "pointer";
+                    banner.innerHTML = "⚠️ 檢測到 LINE 瀏覽器，連結可能失效<br>👉 點此切換至【完整瀏覽器】開啟 👈";
+                    
+                    // 點擊後強制用系統瀏覽器打開
+                    banner.onclick = function() {
+                        var separator = window.location.href.indexOf('?') > -1 ? '&' : '?';
+                        var newUrl = window.location.href + separator + 'openExternalBrowser=1';
+                        window.location.href = newUrl;
+                    };
+                    
+                    document.body.prepend(banner);
+                }
+            }
+        });
+    </script>
+    """
+    components.html(js_code, height=0)
+
+line_browser_fix()
+
+# ==========================================
+# 3. CSS 美學 (手機觸控 + 勾選優化)
 # ==========================================
 st.markdown("""
     <style>
@@ -32,7 +82,7 @@ st.markdown("""
         color: white;
         text-align: center;
         border-radius: 0 0 25px 25px;
-        margin-top: -60px;
+        margin-top: -60px; /* 預留空間給 LINE 提示條 */
         margin-bottom: 20px;
         box-shadow: 0 4px 12px rgba(0,122,255,0.3);
     }
@@ -118,7 +168,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. 完整資料庫 (18項新制 + 連結)
+# 4. 完整資料庫 (18項新制 + 連結)
 # ==========================================
 data = [
     # 💰 荷包/稅務
@@ -167,19 +217,18 @@ data = [
 ]
 
 # ==========================================
-# 4. 手機版頭部
+# 5. 手機版頭部
 # ==========================================
 st.markdown("""
     <div class="mobile-header">
-        <div class="app-title">2026 便民新制通</div>
-        <div class="app-subtitle">三一協會 📢</div>
+        <div class="app-title">三一協會</div>
+        <div class="app-subtitle">2026 便民新制通 📢</div>
     </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 導航與狀態管理
+# 6. 導航與狀態管理
 # ==========================================
-# 初始化 session state 來儲存勾選狀態
 if "checklist" not in st.session_state:
     st.session_state.checklist = []
 
@@ -199,10 +248,9 @@ else:
 st.write("") 
 
 # ==========================================
-# 6. 動態牆 (含勾選功能)
+# 7. 動態牆 (含勾選功能)
 # ==========================================
 for item in display_items:
-    # 外層容器：白色卡片
     with st.container():
         # 版面配置：左邊主要內容 (0.85)，右邊勾選框 (0.15)
         col_content, col_check = st.columns([0.85, 0.15])
@@ -218,18 +266,15 @@ for item in display_items:
             </div>
             """, unsafe_allow_html=True)
             
-            # 按鈕獨立放置，避免被 HTML 包覆影響點擊
+            # 按鈕獨立放置
             st.link_button(f"🔗 {item['btn']}", item['link'], use_container_width=True)
             
         with col_check:
-            # 垂直置中調整 (讓勾選框不會跑太上面)
             st.write("")
             st.write("")
             
-            # 檢查是否已在清單中
             is_checked = item['title'] in st.session_state.checklist
             
-            # 勾選框互動
             if st.checkbox("", key=f"chk_{item['id']}", value=is_checked):
                 if item['title'] not in st.session_state.checklist:
                     st.session_state.checklist.append(item['title'])
@@ -237,10 +282,10 @@ for item in display_items:
                 if item['title'] in st.session_state.checklist:
                     st.session_state.checklist.remove(item['title'])
         
-        st.write("---") # 分隔線
+        st.write("---") 
 
 # ==========================================
-# 7. 我的備忘錄 (自動生成)
+# 8. 我的備忘錄 (自動生成)
 # ==========================================
 if st.session_state.checklist:
     st.markdown("""<div class="memo-box">""", unsafe_allow_html=True)
@@ -253,7 +298,7 @@ if st.session_state.checklist:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 8. 底部版權
+# 9. 底部版權
 # ==========================================
 st.markdown("""
     <div style="text-align: center; margin-top: 30px; padding-bottom: 20px; color: #8e8e93; font-size: 12px;">
@@ -261,4 +306,3 @@ st.markdown("""
     Designed for Mobile
     </div>
 """, unsafe_allow_html=True)
-
