@@ -171,8 +171,8 @@ data = [
 # ==========================================
 st.markdown("""
     <div class="mobile-header">
-        <div class="app-title">三一協會</div>
-        <div class="app-subtitle">2026 便民新制通 📢</div>
+        <div class="app-title">2026 便民新制通</div>
+        <div class="app-subtitle">三一協會 📢</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -261,3 +261,4 @@ st.markdown("""
     Designed for Mobile
     </div>
 """, unsafe_allow_html=True)
+
